@@ -1,5 +1,7 @@
-const profanityBaseURL = "https://www.purgomalum.com/service/plain?text=";
+
+const profanityBaseURL = "https://www.purgomalum.com/service/plain?text="; // Profanity Base
 const nickNamesDictionary = [
+  //Default Nickname picker
   "pink crow",
   "green pigeon",
   "brown robin",
@@ -34,7 +36,17 @@ const nickNamesDictionary = [
   "grease trogon",
   "raven nightjar",
   "sepia barbet",
+  "blue bird",
+  "red eagle",
+  "fighter jet",
+  "magenta phoenix",
+  "krammer jammer",
+  "swishy meerkat",
+  "pink penguin",
+  "black swan",
 ];
+
+//Game Objects
 let obstacleTimers = [];
 let gameStarted = false;
 let gameTimerId;
@@ -50,6 +62,7 @@ let allBirds = {};
 let topScoreChannel;
 let topScoreChannelName = "flappy-top-score";
 
+//Function to pick random nickname
 if (localStorage.getItem("flappy-nickname")) {
   myNickname = localStorage.getItem("flappy-nickname");
 } else {
@@ -57,11 +70,14 @@ if (localStorage.getItem("flappy-nickname")) {
   localStorage.setItem("flappy-nickname", myNickname);
 }
 
+//Realtime database service
 const realtime = new Ably.Realtime({
   authUrl: "/auth",
 });
 
+// Document Object checker to see if content loaded
 document.addEventListener("DOMContentLoaded", () => {
+  //DOM Elements (Default)
   const sky = document.querySelector(".sky");
   const bird = document.querySelector(".bird");
   const gameDisplay = document.querySelector(".game-container");
@@ -78,6 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let isGameOver = false;
   let gap = 440;
 
+  //Checks for profanity in user provided nickname running it through profanity filter
   const filterNickname = async (nicknameText) => {
     const http = new XMLHttpRequest();
     let encodedText = encodeURIComponent(nicknameText);
@@ -90,6 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   };
 
+  //Top Score element defaults to first user
   topScoreLabel.innerHTML =
     "Top score - " + highScore + "pts by " + highScoreNickname;
   nicknameInput.value = myNickname;
@@ -97,18 +115,22 @@ document.addEventListener("DOMContentLoaded", () => {
     filterNickname(nicknameInput.value);
   });
 
+  //Checks for event when spacebar is pressed
   window.addEventListener("keydown", function (e) {
     if (e.keyCode == 32 && e.target == document.body) {
       e.preventDefault();
     }
   });
 
+  //Opens up realtime connection
   realtime.connection.once("connected", () => {
+    //Automatic id given to user
     myClientId = realtime.auth.clientId;
     myPublishChannel = realtime.channels.get("bird-position-" + myClientId);
     topScoreChannel = realtime.channels.get(topScoreChannelName, {
       params: { rewind: 1 },
     });
+    //Channel to update top score
     topScoreChannel.subscribe((msg) => {
       highScore = msg.data.score;
       highScoreNickname = msg.data.nickname;
@@ -116,6 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "Top score - " + highScore + "pts by " + highScoreNickname;
       topScoreChannel.unsubscribe();
     });
+    //Game channel for when game starts that updates and displays other players in realtime
     gameChannel = realtime.channels.get(gameChannelName);
     gameDisplay.onclick = function () {
       if (!gameStarted) {
@@ -126,11 +149,12 @@ document.addEventListener("DOMContentLoaded", () => {
         sendPositionUpdates();
         showOtherBirds();
         document.addEventListener("keydown", control);
-        gameTimerId = setInterval(startGame, 20);
+        gameTimerId = setInterval(startGame, 20); //Gives the game a 20s delay interval for connection
       }
     };
   });
 
+  //Function to start the game setting all game elements in place
   function startGame() {
     birdBottom -= gravity;
     bird.style.bottom = birdBottom + "px";
@@ -144,17 +168,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  //Function for control using spacebar key and when game is running
   function control(e) {
     if (e.keyCode === 32 && !isGameOver) {
       jump();
     }
   }
 
+  //Function to make the character jump
   function jump() {
     if (birdBottom < 500) birdBottom += 50;
     bird.style.bottom = birdBottom + "px";
   }
 
+  //Function to generate random obstacles at random heights and to sort the leaderboard and game accordingly
   function generateObstacles(randomHeight) {
     if (!isGameOver) {
       let obstacleLeft = 500;
@@ -172,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
       topObstacle.style.bottom = obstacleBottom + gap + "px";
       let timerId = setInterval(moveObstacle, 20);
       obstacleTimers.push(timerId);
+      //Function to move the obstacles continuously to the left
       function moveObstacle() {
         obstacleLeft -= 2;
         obstacle.style.left = obstacleLeft + "px";
@@ -205,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  //Function to end the game if player touches the ground or the pipes
   function gameOver() {
     scoreLabel.innerHTML += " | Game Over";
     clearInterval(gameTimerId);
@@ -215,6 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
     realtime.connection.close();
   }
 
+  //Function to update position of the player depending on the state of the game
   function sendPositionUpdates() {
     let publishTimer = setInterval(() => {
       myPublishChannel.publish("pos", {
@@ -229,6 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 100);
   }
 
+  //Function to make the other players visible in the game
   function showOtherBirds() {
     gameChannel.subscribe("game-state", (msg) => {
       for (let item in msg.data.birds) {
@@ -274,6 +305,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  //Function to sort the leaderboard according to the score
   function sortLeaderboard() {
     scoreLabel.innerHTML = "Score: " + myScore;
     let listItems = "";

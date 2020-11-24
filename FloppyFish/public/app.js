@@ -1,3 +1,4 @@
+
 const profanityBaseURL = "https://www.purgomalum.com/service/plain?text=";
 const nickNamesDictionary = [
   "pink crow",
@@ -34,6 +35,14 @@ const nickNamesDictionary = [
   "grease trogon",
   "raven nightjar",
   "sepia barbet",
+  "blue bird",
+  "red eagle",
+  "fighter jet",
+  "magenta phoenix",
+  "krammer jammer",
+  "swishy meerkat",
+  "pink penguin",
+  "black swan",
 ];
 let obstacleTimers = [];
 let gameStarted = false;
@@ -273,8 +282,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-  function sortLeaderboard() {
+  
+ function sortLeaderboard() {
     scoreLabel.innerHTML = "Score: " + myScore;
     let listItems = "";
     let leaderBoard = new Array();
